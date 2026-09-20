@@ -16,19 +16,16 @@ from sklearn.metrics import (
 )
 
 
-# ============================================================
-# 1. Загрузка данных
-# ============================================================
+# Загрузка данных
 
 data = pd.read_csv("data/bank-full.csv", sep=";")
 
-# Убираем "duration" — известен только после звонка (data leakage)
+# duration не используем, так как он известен после звонка
+
 data = data.drop(columns=["duration"])
 
 
-# ============================================================
-# 2. Признаки и целевая переменная
-# ============================================================
+# Признаки и целевая переменная
 
 X = data.drop("y", axis=1)
 y = data["y"].map({"no": 0, "yes": 1})
@@ -43,9 +40,7 @@ numeric_features = [
 ]
 
 
-# ============================================================
-# 3. Разделение данных
-# ============================================================
+# Разделение данных
 
 X_temp, X_test, y_temp, y_test = train_test_split(
     X, y, test_size=0.20, random_state=42, stratify=y
@@ -56,21 +51,25 @@ X_train, X_val, y_train, y_val = train_test_split(
 )
 
 
-# ============================================================
-# 4. Препроцессинг
-# ============================================================
+# Подготовка данных
 
 preprocessor = ColumnTransformer(
     transformers=[
-        ("categorical", OneHotEncoder(handle_unknown="ignore"), categorical_features),
-        ("numeric", StandardScaler(), numeric_features)
+        (
+            "categorical",
+            OneHotEncoder(handle_unknown="ignore"),
+            categorical_features
+        ),
+        (
+            "numeric",
+            StandardScaler(),
+            numeric_features
+        )
     ]
 )
 
 
-# ============================================================
-# 5. Logistic Regression (с балансировкой классов)
-# ============================================================
+# Базовая модель
 
 model = Pipeline([
     ("preprocessor", preprocessor),
@@ -82,9 +81,7 @@ model = Pipeline([
 ])
 
 
-# ============================================================
-# 6. Обучение
-# ============================================================
+# Обучение
 
 print("=" * 60)
 print("ОБУЧЕНИЕ БАЗОВОЙ МОДЕЛИ (Logistic Regression)")
@@ -93,17 +90,13 @@ print("=" * 60)
 model.fit(X_train, y_train)
 
 
-# ============================================================
-# 7. Предсказание
-# ============================================================
+# Предсказание
 
 y_pred = model.predict(X_test)
 y_probability = model.predict_proba(X_test)[:, 1]
 
 
-# ============================================================
-# 8. Метрики
-# ============================================================
+# Расчёт метрик
 
 accuracy = accuracy_score(y_test, y_pred)
 precision = precision_score(y_test, y_pred, zero_division=0)
@@ -113,13 +106,12 @@ macro_f1 = f1_score(y_test, y_pred, average="macro", zero_division=0)
 roc_auc = roc_auc_score(y_test, y_probability)
 
 
-# ============================================================
-# 9. Результаты
-# ============================================================
+# Результаты
 
 print("\n" + "=" * 60)
 print("РЕЗУЛЬТАТЫ LOGISTIC REGRESSION")
 print("=" * 60)
+
 print(f"Accuracy:  {accuracy:.4f}")
 print(f"Precision: {precision:.4f}")
 print(f"Recall:    {recall:.4f}")
@@ -132,9 +124,18 @@ class_names = ["no", "yes"]
 print("\n" + "=" * 60)
 print("CLASSIFICATION REPORT")
 print("=" * 60)
-print(classification_report(y_test, y_pred, target_names=class_names, zero_division=0))
+
+print(
+    classification_report(
+        y_test,
+        y_pred,
+        target_names=class_names,
+        zero_division=0
+    )
+)
 
 print("\n" + "=" * 60)
 print("CONFUSION MATRIX")
 print("=" * 60)
+
 print(confusion_matrix(y_test, y_pred))

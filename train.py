@@ -24,11 +24,7 @@ from tensorflow import keras
 from tensorflow.keras import layers
 
 
-# ============================================================
-# 1. Загрузка данных
-# ============================================================
-# Файл использует ';' как разделитель и кавычки вокруг строк —
-# особенность исходного датасета UCI Bank Marketing.
+# Загрузка данных
 
 data = pd.read_csv("data/bank-full.csv", sep=";")
 
@@ -47,21 +43,12 @@ print(data["y"].value_counts())
 print(data["y"].value_counts(normalize=True))
 
 
-# ============================================================
-# 2. Удаление признака с утечкой данных (data leakage)
-# ============================================================
-# Согласно документации датасета, признак "duration" (длительность
-# последнего звонка) известен только ПОСЛЕ завершения звонка.
-# Использовать его для реалистичного прогноза "до звонка" нельзя —
-# это классический случай утечки целевой информации в признаки.
-# Поэтому мы исключаем его из набора признаков.
+# duration не используем, так как это информация после звонка
 
 data = data.drop(columns=["duration"])
 
 
-# ============================================================
-# 3. График распределения классов
-# ============================================================
+# Распределение классов
 
 plt.figure(figsize=(6, 5))
 data["y"].value_counts().plot(kind="bar", color=["#4C72B0", "#DD8452"])
@@ -74,9 +61,7 @@ plt.savefig("class_distribution.png", dpi=300)
 plt.close()
 
 
-# ============================================================
-# 4. Признаки и целевая переменная
-# ============================================================
+# Признаки и целевая переменная
 
 X = data.drop("y", axis=1)
 y = data["y"].map({"no": 0, "yes": 1})
@@ -91,9 +76,7 @@ numeric_features = [
 ]
 
 
-# ============================================================
-# 5. Разделение данных (train / val / test)
-# ============================================================
+# Делим данные на train, validation и test
 
 X_temp, X_test, y_temp, y_test = train_test_split(
     X, y, test_size=0.20, random_state=42, stratify=y
@@ -111,14 +94,20 @@ print(f"Validation: {len(X_val)}")
 print(f"Test:       {len(X_test)}")
 
 
-# ============================================================
-# 6. Препроцессинг: One-Hot для категорий + масштабирование чисел
-# ============================================================
+# Обработка категориальных и числовых признаков
 
 preprocessor = ColumnTransformer(
     transformers=[
-        ("categorical", OneHotEncoder(handle_unknown="ignore", sparse_output=False), categorical_features),
-        ("numeric", StandardScaler(), numeric_features)
+        (
+            "categorical",
+            OneHotEncoder(handle_unknown="ignore", sparse_output=False),
+            categorical_features
+        ),
+        (
+            "numeric",
+            StandardScaler(),
+            numeric_features
+        )
     ]
 )
 
@@ -132,24 +121,24 @@ print(f"Validation: {X_val_encoded.shape}")
 print(f"Test: {X_test_encoded.shape}")
 
 
-# ============================================================
-# 7. Веса классов (компенсация дисбаланса ~88% / ~12%)
-# ============================================================
+# Учитываем дисбаланс классов
 
 class_weights_array = compute_class_weight(
     class_weight="balanced",
     classes=np.array([0, 1]),
     y=y_train
 )
-class_weight = {0: class_weights_array[0], 1: class_weights_array[1]}
 
-print("\nВеса классов для компенсации дисбаланса:")
+class_weight = {
+    0: class_weights_array[0],
+    1: class_weights_array[1]
+}
+
+print("\nВеса классов:")
 print(class_weight)
 
 
-# ============================================================
-# 8. Архитектура нейронной сети
-# ============================================================
+# Архитектура модели
 
 input_size = X_train_encoded.shape[1]
 
@@ -177,9 +166,7 @@ print("=" * 60)
 model.summary()
 
 
-# ============================================================
-# 9. Early Stopping
-# ============================================================
+# Останавливаем обучение, если качество перестало улучшаться
 
 early_stopping = keras.callbacks.EarlyStopping(
     monitor="val_loss",
@@ -188,16 +175,15 @@ early_stopping = keras.callbacks.EarlyStopping(
 )
 
 
-# ============================================================
-# 10. Обучение
-# ============================================================
+# Обучение
 
 print("\n" + "=" * 60)
 print("ОБУЧЕНИЕ")
 print("=" * 60)
 
 history = model.fit(
-    X_train_encoded, y_train,
+    X_train_encoded,
+    y_train,
     validation_data=(X_val_encoded, y_val),
     epochs=100,
     batch_size=64,
@@ -209,9 +195,7 @@ history = model.fit(
 print(f"\nКоличество фактически выполненных эпох: {len(history.history['loss'])}")
 
 
-# ============================================================
-# 11. График Loss
-# ============================================================
+# График функции потерь
 
 plt.figure(figsize=(8, 5))
 plt.plot(history.history["loss"], label="Train Loss")
@@ -226,9 +210,7 @@ plt.savefig("loss_history.png", dpi=300)
 plt.close()
 
 
-# ============================================================
-# 12. График Accuracy
-# ============================================================
+# График точности
 
 plt.figure(figsize=(8, 5))
 plt.plot(history.history["accuracy"], label="Train Accuracy")
@@ -243,9 +225,7 @@ plt.savefig("accuracy_history.png", dpi=300)
 plt.close()
 
 
-# ============================================================
-# 13. Оценка модели на тесте
-# ============================================================
+# Проверка на тестовой выборке
 
 test_results = model.evaluate(X_test_encoded, y_test, verbose=0)
 test_loss, test_accuracy, test_auc = test_results
@@ -254,9 +234,7 @@ y_probability = model.predict(X_test_encoded, verbose=0).ravel()
 y_pred = (y_probability >= 0.5).astype(int)
 
 
-# ============================================================
-# 14. Метрики
-# ============================================================
+# Расчёт метрик
 
 accuracy = accuracy_score(y_test, y_pred)
 precision = precision_score(y_test, y_pred, zero_division=0)
@@ -277,21 +255,25 @@ print(f"Macro F1:      {macro_f1:.4f}")
 print(f"ROC-AUC:       {roc_auc:.4f}")
 
 
-# ============================================================
-# 15. Classification Report
-# ============================================================
+# Отчёт по классам
 
 class_names = ["no", "yes"]
 
 print("\n" + "=" * 60)
 print("CLASSIFICATION REPORT")
 print("=" * 60)
-print(classification_report(y_test, y_pred, target_names=class_names, zero_division=0))
+
+print(
+    classification_report(
+        y_test,
+        y_pred,
+        target_names=class_names,
+        zero_division=0
+    )
+)
 
 
-# ============================================================
-# 16. Матрица ошибок
-# ============================================================
+# Матрица ошибок
 
 cm = confusion_matrix(y_test, y_pred)
 
@@ -301,7 +283,15 @@ print("=" * 60)
 print(cm)
 
 plt.figure(figsize=(6, 5))
-sns.heatmap(cm, annot=True, fmt="d", xticklabels=class_names, yticklabels=class_names, cmap="rocket_r")
+sns.heatmap(
+    cm,
+    annot=True,
+    fmt="d",
+    xticklabels=class_names,
+    yticklabels=class_names,
+    cmap="rocket_r"
+)
+
 plt.title("Матрица ошибок")
 plt.xlabel("Предсказанный класс")
 plt.ylabel("Истинный класс")
@@ -310,15 +300,25 @@ plt.savefig("confusion_matrix.png", dpi=300)
 plt.close()
 
 
-# ============================================================
-# 17. ROC-кривая
-# ============================================================
+# ROC-кривая
 
 fpr, tpr, _ = roc_curve(y_test, y_probability)
 
 plt.figure(figsize=(6, 5))
-plt.plot(fpr, tpr, label=f"ROC-AUC = {roc_auc:.4f}")
-plt.plot([0, 1], [0, 1], linestyle="--", color="gray", label="Случайный классификатор")
+plt.plot(
+    fpr,
+    tpr,
+    label=f"ROC-AUC = {roc_auc:.4f}"
+)
+
+plt.plot(
+    [0, 1],
+    [0, 1],
+    linestyle="--",
+    color="gray",
+    label="Случайный классификатор"
+)
+
 plt.title("ROC-кривая")
 plt.xlabel("False Positive Rate")
 plt.ylabel("True Positive Rate")
@@ -329,9 +329,7 @@ plt.savefig("roc_curve.png", dpi=300)
 plt.close()
 
 
-# ============================================================
-# 18. Сохранение модели и препроцессора
-# ============================================================
+# Сохраняем модель и обработчик данных
 
 model.save("model/bank_marketing_model.keras")
 joblib.dump(preprocessor, "model/preprocessor.pkl")
