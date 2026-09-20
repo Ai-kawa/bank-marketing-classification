@@ -1,0 +1,8 @@
+services:
+  bank-marketing:
+    image: aiikawa/bank-marketing:latest
+    build: .
+    ports:
+      - "5000:5000"
+    volumes:
+      - ./model:/app/model:ro

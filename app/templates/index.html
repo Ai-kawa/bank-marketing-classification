@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Прогноз подписки на депозит</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: Arial, sans-serif;
+            background: #f2f4f7;
+            color: #222;
+        }
+        .container {
+            max-width: 750px;
+            margin: 40px auto;
+            padding: 30px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+        }
+        h1 { text-align: center; margin-bottom: 10px; font-size: 22px; }
+        .description { text-align: center; color: #666; margin-bottom: 30px; }
+        .grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+        }
+        .form-group { margin-bottom: 4px; }
+        label { display: block; margin-bottom: 6px; font-weight: 600; font-size: 14px; }
+        select, input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-size: 14px;
+            background: white;
+        }
+        button {
+            margin-top: 24px;
+            width: 100%;
+            padding: 13px;
+            background: #2563eb;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+        }
+        button:hover { background: #1d4ed8; }
+        .result {
+            margin-top: 24px;
+            padding: 18px;
+            border-radius: 8px;
+            text-align: center;
+            font-size: 17px;
+            background: #eef2ff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Оценка вероятности подписки на срочный вклад</h1>
+        <p class="description">Заполните данные клиента и параметры контакта</p>
+
+        <form method="POST">
+            <div class="grid">
+                <div class="form-group">
+                    <label>Возраст</label>
+                    <input type="number" name="age" required min="18" max="100" value="40">
+                </div>
+
+                <div class="form-group">
+                    <label>Профессия</label>
+                    <select name="job">
+                        <option>admin.</option>
+                        <option>blue-collar</option>
+                        <option>entrepreneur</option>
+                        <option>housemaid</option>
+                        <option selected>management</option>
+                        <option>retired</option>
+                        <option>self-employed</option>
+                        <option>services</option>
+                        <option>student</option>
+                        <option>technician</option>
+                        <option>unemployed</option>
+                        <option>unknown</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Семейное положение</label>
+                    <select name="marital">
+                        <option selected>married</option>
+                        <option>single</option>
+                        <option>divorced</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Образование</label>
+                    <select name="education">
+                        <option>primary</option>
+                        <option selected>secondary</option>
+                        <option>tertiary</option>
+                        <option>unknown</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Есть просрочка по кредиту?</label>
+                    <select name="default">
+                        <option selected>no</option>
+                        <option>yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Баланс на счету (евро)</label>
+                    <input type="number" name="balance" required value="1000">
+                </div>
+
+                <div class="form-group">
+                    <label>Есть ипотека?</label>
+                    <select name="housing">
+                        <option selected>yes</option>
+                        <option>no</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Есть потребительский кредит?</label>
+                    <select name="loan">
+                        <option selected>no</option>
+                        <option>yes</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Способ связи</label>
+                    <select name="contact">
+                        <option selected>cellular</option>
+                        <option>telephone</option>
+                        <option>unknown</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>День последнего контакта (1-31)</label>
+                    <input type="number" name="day" required min="1" max="31" value="15">
+                </div>
+
+                <div class="form-group">
+                    <label>Месяц последнего контакта</label>
+                    <select name="month">
+                        <option>jan</option><option>feb</option><option>mar</option>
+                        <option>apr</option><option selected>may</option><option>jun</option>
+                        <option>jul</option><option>aug</option><option>sep</option>
+                        <option>oct</option><option>nov</option><option>dec</option>
+                    </select>
+                </div>
+
+                <div class="form-group">
+                    <label>Кол-во контактов в этой кампании</label>
+                    <input type="number" name="campaign" required min="1" value="2">
+                </div>
+
+                <div class="form-group">
+                    <label>Дней с прошлого контакта (-1 = не было)</label>
+                    <input type="number" name="pdays" required value="-1">
+                </div>
+
+                <div class="form-group">
+                    <label>Кол-во контактов до этой кампании</label>
+                    <input type="number" name="previous" required min="0" value="0">
+                </div>
+
+                <div class="form-group">
+                    <label>Результат прошлой кампании</label>
+                    <select name="poutcome">
+                        <option selected>unknown</option>
+                        <option>failure</option>
+                        <option>other</option>
+                        <option>success</option>
+                    </select>
+                </div>
+            </div>
+
+            <button type="submit">Оценить клиента</button>
+        </form>
+
+        {% if result %}
+        <div class="result">
+            <strong>{{ result }}</strong><br>
+            Вероятность подписки: {{ probability }}%
+        </div>
+        {% endif %}
+    </div>
+</body>
+</html>
